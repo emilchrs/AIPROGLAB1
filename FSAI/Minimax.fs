@@ -26,7 +26,5 @@ type OtherTile =
 
 //MakeMove
 
-
-
 //Minimax
 

@@ -2,147 +2,143 @@
 
 module x =
 
-    type tile =
-    | Black
-    | White
-    | Empty
+    type byte =
+    | Empty = 0
+    | White = 1
+    | Black = 2
+    | Valid = 3
+    | Tie = 4
 
-        type Game() =
-        //IsOnBoard
 
-    
-            static member IsOnBoard(x : int, y : int) = 
-                0 <= x && x <= 7 && 0 <= y && y <= 7
+    let IsOnBoard(x : int, y : int) = 
+      0 <= x && x <= 7 && 0 <= y && y <= 7
+
+    let GetScore (board2D: byte[,],t:byte) =  
+      0
+
+         
+    let GetWinner (board : byte[,]) = 
+        let (blackScore : int) = GetScore (board, byte.Black)
+        let (whiteScore : int) = GetScore (board, byte.White)
+        if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, Black)).Count + (GetValidMoves (board, White)).Count = 0 then
+            if blackScore > whiteScore then byte.Black
+            else
+                if whiteScore > blackScore then byte.White
+                else byte.Tie
+        else
+        byte.Empty
+                
         //OtherTile
-            static member OtherTile(tile : System.Byte) = 
-                if tile = Black
-                then White
-                if tile = White
-                then Black
-                raise (new ArgumentException("tile must have value 1 or 2.") :> System.Exception)
+    let OtherTile (tile : byte) = 
+                if tile = byte.Black
+                then byte.White
+                elif tile = byte.White
+                then byte.Black
+                else
+                raise (new System.ArgumentException("tile must have value 1 or 2.") :> System.Exception)
 
-            let getScore board2D (t:tile) =   //råkade göra "getscore" fast bättre
-                let board1D = board2D |>  List.reduce List.append
-                let board =  board1D |> List.sumBy (fun x -> 
-                    if x = t then 1 
-                    else 0)
-                board
-        //GetWinner
-            static member GetWinner(board : byte[,]) = 
-                let mutable (blackScore : int) = GetScore (board, Black)
-                let mutable (whiteScore : int) = GetScore (board, White)
-                if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, Black)).Count + (GetValidMoves (board, White)).Count = 0
-                then
-                    if blackScore > whiteScore
-                    then Black
-                    else
-                        if whiteScore > blackScore
-                        then White
-                        else Tie
-                Empty
-        //CountCorners
-            let countCornes board2D (t:tile)=
-                0
-            
-        //Evaluation
+    let GetValidMoves(board: byte[,], tile : byte) = 
+                       let mutable (validMoves : List<System.Tuple<int, int>>) = new List<Tuple<int, int>>()
+                       do 
+                           let mutable (X : int) = 0
+                           while (X < 8) do
+                               do 
+                                   let mutable (Y : int) = 0
+                                   while (Y < 8) do
+                                       if board.[X, Y] = byte.Empty
+                                       then 
+                                           let mutable (doneMove : System.Boolean) = false
+                                           for (dir : int[]) in dirs do
+                                               if doneMove
+                                               then   //break
+                                                   let mutable (x : int) = X + dir.[0]
+                                                   let mutable (y : int) = Y + dir.[1]
+                                                   if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile)
+                                                   then 
+                                                       x <- x + dir.[0]
+                                                       y <- y + dir.[1]
+                                                       while (IsOnBoard (x, y)) do
+                                                           if board.[x, y] = tile
+                                                           then 
+                                                               validMoves.Add (Tuple.Create (X, Y))
+                                                               doneMove <- true
+                                                               //break
+                                                           else 
+                                                               if board.[x, y] = byte.Empty
+                                                               then //break
+                                                                   x <- x + dir.[0]
+                                                                   y <- y + dir.[1]
+                  
+                       validMoves           
+           
+        
 
-        //GetValidMoves
+    let Evaluation (board : byte[,]) = //gör samma men kollar ej om spelet är slut eller om ingen kan röra sig
+              let blackScore = GetScore (board, byte.Black)
+              let whiteScore =  GetScore (board, byte.White)
+              let bothScore =  blackScore- whiteScore //eval 308
 
-            static member GetValidMoves(board, tile : System.Byte) = 
-                    let mutable (validMoves : List<Tuple<int, int>>) = new List<Tuple<int, int>>()
-                    do 
-                        let mutable (X : int) = 0
-                        while (X < 8) do
-                            do 
-                                let mutable (Y : int) = 0
-                                while (Y < 8) do
-                                    if board.[X, Y] = Empty
-                                    then 
-                                        let mutable (doneMove : System.Boolean) = false
-                                        for (dir : int[]) in dirs do
-                                            if doneMove
-                                            then   //break
-                                                let mutable (x : int) = X + dir.[0]
-                                                let mutable (y : int) = Y + dir.[1]
-                                                if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile)
-                                                then 
-                                                    x <- x + dir.[0]
-                                                    y <- y + dir.[1]
-                                                    while (IsOnBoard (x, y)) do
-                                                        if board.[x, y] = tile
-                                                        then 
-                                                            validMoves.Add (Tuple.Create (X, Y))
-                                                            doneMove <- true
-                                                            //break
-                                                        else 
-                                                            if board.[x, y] = Empty
-                                                            then //break
-                                                                x <- x + dir.[0]
-                                                                y <- y + dir.[1]
-               
-                    validMoves
+              let moveScoreBlack = GetValidMoves (board, byte.Black) 
+              let moveScoreWhite = GetValidMoves (board, byte.White)
+              let moveScore = moveScoreBlack.Length - moveScoreWhite.Length //eval 313
 
-            let Evaluation board = //gör samma men kollar ej om spelet är slut eller om ingen kan röra sig
-                let blackScore = getScore board Black
-                let whiteScore =  getScore board White
-                let bothScore =  blackScore- whiteScore //eval 308
+              let cornerScoreBlack = countCorners board Black
+              let cornerScoreWhite = countCorners board White
+              let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
 
-                let moveScoreBlack = getValidMove Black 
-                let moveScoreWhite = getValidMove White
-                let moveScore = moveScoreBlack - moveScoreWhite //eval 313
+              if blackScore = 0 then
+                  2000
+              elif whiteScore = 0 then
+                  -2000
+              elif blackScore + whiteScore = 64 || moveScoreBlack.Length + moveScoreWhite.Length = 0 then // elif?
+                  if blackScore < whiteScore then
+                      (-1000 - whiteScore + blackScore)
+                  elif blackScore < whiteScore then
+                          (1000 - whiteScore + blackScore)
+                  else
+                          0
+              elif blackScore + whiteScore > 55 then 
+                  bothScore
+              else 
+              bothScore + 3 * moveScore + 10 * cornerScore
 
-                let cornerScoreBlack = countCorners board Black
-                let cornerScoreWhite = countCorners board White
-                let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
-
-                if blackScore = 0 then
-                    2000
-                elif whiteScore = 0 then
-                    -2000
-                elif blackScore + whiteScore = 64 || moveScoreBlack + moveScoreWhite = 0 then // elif?
-                    if blackScore < whiteScore then
-                        (-1000 - whiteScore + blackScore)
-                    elif blackScore < whiteScore then
-                         (1000 - whiteScore + blackScore)
-                    else
-                         0
-                elif blackScore + whiteScore > 55 then 
-                    bothScore
-                else 
-                bothScore + 3 * moveScore + 10 * cornerScore
 
     //MakeMove
-            let Max x y =
-                if x > y then x
-                else y
-            let Min x y =
-                if x < y then x
-                else y
+    let Max (x : int, y : int) =
+               if x > y then x
+               else y
+    let Min (x : int, y : int) =
+        if x < y then x
+        else y       
     //Minimax
 
-            let rec MiniMaxAlphaBeta(board : byte, depth : int, a : int, b : int, tile : System.Byte, isMaxplayer : System.Boolean) =
-                if depth = 0 || GetWinner (board) <> Empty
-                then (Evaluation (board))
-                let mutable bestScore = 0 //int
+    let rec MiniMaxAlphaBeta(board : byte[,], depth : int, a : int, b : int, tile : byte, isMaxplayer : System.Boolean) =
+            let mutable bestScore = 0 //int
+            let mutable x = 0
+            let mutable y = 0
+            if depth = 0 || GetWinner (board) <> byte.Empty then (Evaluation (board))
+            else
                 if isMaxplayer
-                then bestScore <- int.MinValue
-                else bestScore <- int.MaxValue
-                let mutable (validMoves : List<Tuple<int,int>>) = (GetValidMoves (board, tile)) :> List<Tuple>
-                if validMoves.Count > 0
+                then bestScore <- -5
+                else bestScore <- +5
+                let validMoves = (GetValidMoves (board, tile))
+                if validMoves.Length > 0
                 then
-                    for (move : Tuple<int, int>) in validMoves do
+                    for (move : System.Tuple<int, int>) in validMoves do
                         let board2 = board
                         let mutable (childBoard : byte [,]) = Array.copy board
                         MakeMove(childBoard, move, tile)
                         let mutable (nodeScore : int) = MiniMaxAlphaBeta (childBoard, depth-1, a, b, OtherTile(tile), not isMaxplayer)
                         if isMaxplayer
                         then
-                            bestScore <- Math.Max(bestScore, nodeScore)
-                            a <- Max bestScore, a
+                            x <- Max (bestScore, a)
+                            bestScore <- Max (bestScore, nodeScore)
+                            
                         else
-                            bestScore <- Math.Min(bestScore, nodeScore)
-                            b <- Min(bestScore, b)
-                        if (b <= a)
-                        then 0
+                            y <- Min(bestScore, b)
+                            bestScore <- Min(bestScore, nodeScore)
+                            
+                        if (y <= x)
+                        then bestScore
                 else (MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer))
-                bestScore
+                bestScore   

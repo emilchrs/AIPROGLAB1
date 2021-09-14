@@ -13,9 +13,18 @@ module x =
     let IsOnBoard(x : int, y : int) = 
       0 <= x && x <= 7 && 0 <= y && y <= 7
 
+      //vetfan hur jag testar
     let GetScore (board2D: byte[,],t:byte) =  
-      0
+      let test = Seq.cast board2D 
+      let res = test |> Seq.filter (fun x -> x = t)
+      Seq.length
 
+      // funkar ej
+    let checkCorners (board : byte[,], tile : byte) =
+        let corner= seq [board[0,0]]
+        let test = corner |> Seq.filter (fun x -> x = tile) |> Seq.length
+        test
+        
          
     let GetWinner (board : byte[,]) = 
         let (blackScore : int) = GetScore (board, byte.Black)

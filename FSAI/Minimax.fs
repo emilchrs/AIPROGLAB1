@@ -88,7 +88,7 @@ module x =
     let Evaluation (board : byte[,]) = //gör samma men kollar ej om spelet är slut eller om ingen kan röra sig
               let blackScore = GetScore (board, byte.Black)
               let whiteScore =  GetScore (board, byte.White)
-              let bothScore =  blackScore- whiteScore //eval 308
+              let bothScore =  blackScore - whiteScore //eval 308
 
               let moveScoreBlack = GetValidMoves (board, byte.Black) 
               let moveScoreWhite = GetValidMoves (board, byte.White)
@@ -116,6 +116,16 @@ module x =
 
 
     //MakeMove
+
+    let MakeMove(board : byte[,], move : System.Tuple<int, int>, tile : byte) = 
+        let (flippedPieces : List<Tuple<int>>) = (GetFlippedPieces(board,move,tile)) :> List<Tuple>
+        for (flippedPiece : Tuple<int,int>) in flippedPieces do 
+            board.[(int flippedPiece.Item1), (int flippedPiece.Item2] <- tile
+            if flippedPieces > 0 then
+                board.[(int move.Item1), (int move.Item2)] <- tile
+
+
+
     let Max (x : int, y : int) =
                if x > y then x
                else y

@@ -18,14 +18,13 @@ module x =
       0 <= x && x <= 7 && 0 <= y && y <= 7
 
       //vetfan hur jag testar
-    let GetScore (board2D: byte[,],t:byte) =  
+    let GetScore (board2D: byte[,],tile:byte) =  
       let test = Seq.cast board2D 
-      let res = test |> Seq.filter (fun x -> x = t)
-      Seq.length
-
+      let res = test |> Seq.filter (fun x -> x = tile) |>Seq.length
+      res
       // funkar ej
     let checkCorners (board : byte[,], tile : byte) =
-        let corner= seq [board[0,0]]
+        let corner = seq {Array2D.get board 0 0;Array2D.get board 7 0;Array2D.get board 0 7;Array2D.get board 7 7 }
         let test = corner |> Seq.filter (fun x -> x = tile) |> Seq.length
         test
         
@@ -193,3 +192,4 @@ module x =
                         then bestScore
                 else (MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer))
                 bestScore   
+

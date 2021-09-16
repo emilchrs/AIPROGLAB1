@@ -79,9 +79,12 @@ module x =
                                                            else 
                                                                if board.[x, y] = byte.Empty
                                                                then //break
-                                                                   x <- x + dir.[0]
-                                                                   y <- y + dir.[1]
-                  
+                                                           x <- x + dir.[0]
+                                                           y <- y + dir.[1]
+                                        Y <- Y + 1
+                                        Y
+                                X <- X + 1
+                                X
                        validMoves           
            
         
@@ -118,13 +121,38 @@ module x =
 
     //MakeMove
 
-    let MakeMove(board : byte[,], move : System.Tuple<int, int>, tile : byte) = 
-        let (flippedPieces : List<Tuple<int>>) = (GetFlippedPieces(board,move,tile)) :> List<Tuple>
-        for (flippedPiece : Tuple<int,int>) in flippedPieces do 
-            board.[(int flippedPiece.Item1), (int flippedPiece.Item2] <- tile
-            if flippedPieces > 0 then
-                board.[(int move.Item1), (int move.Item2)] <- tile
+ 
 
+
+    let GetFlippedPieces(board : byte[,], move : int * int, tile : byte) =
+        let (moveX : int) = fst move
+        let (moveY : int) = snd move
+        let flippedPieces : List<int * int> = List.Empty  
+        if board.[moveX, moveY] = byte.Empty then
+            for(dir : int[]) in dirs do
+                let dirFlippedPieces : List<int * int> = List.Empty
+                let (x : int) = moveX + dir.[0]
+                let (y : int) = moveY + dir.[1]
+                if IsOnBoard (x,y) && board.[x,y] = OtherTile(tile) then
+                    dirFlippedPieces.Add (Tuple.Create(x,y))
+                    x <- x + dir.[0]
+                    y <- y + dir.[1]
+                    while (IsOnBoard (x,y)) do
+                        if board.[x, y] = tile
+                        then 
+                        if board.[x,y] = byte.Empty
+                        then 
+                        x <- x + dir.[0]
+                        y <- y + dir.[1]
+        flippedPieces
+
+
+    let MakeMove(board : byte[,], (move : (int * int)), tile : byte) = 
+         let flippedPieces = GetFlippedPieces(board,move,tile)
+         for flippedPiece in flippedPieces do 
+             board.[fst flippedPiece, snd flippedPiece] <- tile
+             if flippedPieces > 0 then 
+                 board.[(fst move), (snd move)] <- tile
 
 
     let Max (x : int, y : int) =
@@ -147,7 +175,7 @@ module x =
                 let validMoves = (GetValidMoves (board, tile))
                 if validMoves.Length > 0
                 then
-                    for (move : System.Tuple<int, int>) in validMoves do
+                    for (move : (int * int)) in validMoves do
                         let board2 = board
                         let mutable (childBoard : byte [,]) = Array.copy board
                         MakeMove(childBoard, move, tile)

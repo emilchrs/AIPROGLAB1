@@ -67,8 +67,8 @@ module x =
                                                            else 
                                                                if board.[x, y] = byte.Empty
                                                                then //break
-                                                           x <- x + dir.[0]
-                                                           y <- y + dir.[1]
+                                                                   x <- x + dir.[0]
+                                                                   y <- y + dir.[1]
                              
                        validMoves           
            
@@ -145,10 +145,12 @@ module x =
 
     let MakeMove(board : byte[,], (move : (int * int)), tile : byte) = 
          let flippedPieces = GetFlippedPieces(board,move,tile)
+         let board2 = Array2D.copy board
          for flippedPiece in flippedPieces do 
-             board.[fst flippedPiece, snd flippedPiece] <- tile
-             if List.isEmpty flippedPieces then 
-                 board.[(fst move), (snd move)] <- tile
+             board2.[fst flippedPiece, snd flippedPiece] <- tile
+         if not flippedPieces.IsEmpty then 
+            board2.[(fst move), (snd move)] <- tile
+         board2
 
 
     let Max (x : int, y : int) =
@@ -174,8 +176,8 @@ module x =
                 then
                     for (move : (int * int)) in validMoves do
                         let mutable (childBoard : byte [,]) = Array2D.copy board
-                        MakeMove(childBoard, move, tile)
-                        let mutable (nodeScore : int) = MiniMaxAlphaBeta (childBoard, depth-1, a, b, OtherTile(tile), not isMaxplayer)
+                        let z = MakeMove(childBoard, move, tile)
+                        let mutable (nodeScore : int) = MiniMaxAlphaBeta (z, depth-1, a, b, OtherTile(tile), not isMaxplayer)
                         if isMaxplayer
                         then
                             bestScore <- Max (bestScore, nodeScore)
@@ -185,6 +187,7 @@ module x =
                             y <- Min(bestScore, b)
                         if (y <= x)
                         then bestScore
-                else (MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer))
+                        
+                else MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer)
                 bestScore   
 

@@ -9,6 +9,7 @@ module x =
     | Valid = 3
     | Tie = 4
 
+    let addList (list : List<(int * int)>, element : (int * int)) = element :: list 
 
     let dirs = [|[|(int (- 1)); 1|]; [|0; 1|]; [|1; 1|]; 
                [|(int (- 1)); 0|];                 [|1; 0|]; 
@@ -23,23 +24,11 @@ module x =
       let res = test |> Seq.filter (fun x -> x = tile) |>Seq.length
       res
       // funkar ej
-    let checkCorners (board : byte[,], tile : byte) =
+    let countCorners (board : byte[,], tile : byte) =
         let corner = seq {Array2D.get board 0 0;Array2D.get board 7 0;Array2D.get board 0 7;Array2D.get board 7 7 }
         let test = corner |> Seq.filter (fun x -> x = tile) |> Seq.length
         test
         
-         
-    let GetWinner (board : byte[,]) = 
-        let (blackScore : int) = GetScore (board, byte.Black)
-        let (whiteScore : int) = GetScore (board, byte.White)
-        if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, Black)).Count + (GetValidMoves (board, White)).Count = 0 then
-            if blackScore > whiteScore then byte.Black
-            else
-                if whiteScore > blackScore then byte.White
-                else byte.Tie
-        else
-        byte.Empty
-                
         //OtherTile
     let OtherTile (tile : byte) = 
                 if tile = byte.Black
@@ -50,7 +39,7 @@ module x =
                 raise (new System.ArgumentException("tile must have value 1 or 2.") :> System.Exception)
 
     let GetValidMoves(board: byte[,], tile : byte) = 
-                       let mutable (validMoves : List<System.Tuple<int, int>>) = new List<Tuple<int, int>>()
+                       let mutable (validMoves : List<int * int>) = List.Empty
                        do 
                            let mutable (X : int) = 0
                            while (X < 8) do
@@ -72,7 +61,7 @@ module x =
                                                        while (IsOnBoard (x, y)) do
                                                            if board.[x, y] = tile
                                                            then 
-                                                               validMoves.Add (Tuple.Create (X, Y))
+                                                               let z = addList(validMoves, (X, Y)) 
                                                                doneMove <- true
                                                                //break
                                                            else 
@@ -80,13 +69,21 @@ module x =
                                                                then //break
                                                            x <- x + dir.[0]
                                                            y <- y + dir.[1]
-                                        Y <- Y + 1
-                                        Y
-                                X <- X + 1
-                                X
+                             
                        validMoves           
            
         
+    let GetWinner (board : byte[,]) = 
+           let (blackScore : int) = GetScore (board, byte.Black)
+           let (whiteScore : int) = GetScore (board, byte.White)
+           if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, byte.Black)).Length + (GetValidMoves (board, byte.White)).Length = 0 then
+               if blackScore > whiteScore then byte.Black
+               else
+                   if whiteScore > blackScore then byte.White
+                   else byte.Tie
+           else
+           byte.Empty
+
 
     let Evaluation (board : byte[,]) = //gör samma men kollar ej om spelet är slut eller om ingen kan röra sig
               let blackScore = GetScore (board, byte.Black)
@@ -97,8 +94,8 @@ module x =
               let moveScoreWhite = GetValidMoves (board, byte.White)
               let moveScore = moveScoreBlack.Length - moveScoreWhite.Length //eval 313
 
-              let cornerScoreBlack = countCorners board Black
-              let cornerScoreWhite = countCorners board White
+              let cornerScoreBlack = countCorners (board, byte.Black)
+              let cornerScoreWhite = countCorners (board, byte.White)
               let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
 
               if blackScore = 0 then
@@ -120,7 +117,7 @@ module x =
 
     //MakeMove
 
- 
+   
 
 
     let GetFlippedPieces(board : byte[,], move : int * int, tile : byte) =
@@ -130,19 +127,19 @@ module x =
         if board.[moveX, moveY] = byte.Empty then
             for(dir : int[]) in dirs do
                 let dirFlippedPieces : List<int * int> = List.Empty
-                let (x : int) = moveX + dir.[0]
-                let (y : int) = moveY + dir.[1]
+                let mutable (x : int) = moveX + dir.[0]
+                let mutable (y : int) = moveY + dir.[1]
                 if IsOnBoard (x,y) && board.[x,y] = OtherTile(tile) then
-                    dirFlippedPieces.Add (Tuple.Create(x,y))
+                    let z = addList(flippedPieces, (x,y))
                     x <- x + dir.[0]
                     y <- y + dir.[1]
                     while (IsOnBoard (x,y)) do
                         if board.[x, y] = tile
                         then 
-                        if board.[x,y] = byte.Empty
-                        then 
-                        x <- x + dir.[0]
-                        y <- y + dir.[1]
+                            if board.[x,y] = byte.Empty
+                            then 
+                                x <- x + dir.[0]
+                                y <- y + dir.[1]
         flippedPieces
 
 
@@ -150,7 +147,7 @@ module x =
          let flippedPieces = GetFlippedPieces(board,move,tile)
          for flippedPiece in flippedPieces do 
              board.[fst flippedPiece, snd flippedPiece] <- tile
-             if flippedPieces > 0 then 
+             if List.isEmpty flippedPieces then 
                  board.[(fst move), (snd move)] <- tile
 
 
@@ -161,13 +158,14 @@ module x =
         if x < y then x
         else y       
     //Minimax
-
+    
     let rec MiniMaxAlphaBeta(board : byte[,], depth : int, a : int, b : int, tile : byte, isMaxplayer : System.Boolean) =
             let mutable bestScore = 0 //int
             let mutable x = 0
             let mutable y = 0
-            if depth = 0 || GetWinner (board) <> byte.Empty then (Evaluation (board))
-            else
+            if depth = 0 || GetWinner (board) <> byte.Empty 
+            then (Evaluation (board))
+            else 
                 if isMaxplayer
                 then bestScore <- -5
                 else bestScore <- +5
@@ -175,19 +173,16 @@ module x =
                 if validMoves.Length > 0
                 then
                     for (move : (int * int)) in validMoves do
-                        let board2 = board
-                        let mutable (childBoard : byte [,]) = Array.copy board
+                        let mutable (childBoard : byte [,]) = Array2D.copy board
                         MakeMove(childBoard, move, tile)
                         let mutable (nodeScore : int) = MiniMaxAlphaBeta (childBoard, depth-1, a, b, OtherTile(tile), not isMaxplayer)
                         if isMaxplayer
                         then
-                            x <- Max (bestScore, a)
                             bestScore <- Max (bestScore, nodeScore)
-                            
+                            x <- Max (bestScore, a)
                         else
-                            y <- Min(bestScore, b)
                             bestScore <- Min(bestScore, nodeScore)
-                            
+                            y <- Min(bestScore, b)
                         if (y <= x)
                         then bestScore
                 else (MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer))

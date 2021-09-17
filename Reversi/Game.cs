@@ -403,7 +403,7 @@ namespace Reversi
                     }
                     else
                     {
-                        nodeScore = FSAI.x.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), true);
+                        nodeScore = FSAI.minimax.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), true);
                         if (nodeScore < bestScore)
                         {
                             bestScore = nodeScore;

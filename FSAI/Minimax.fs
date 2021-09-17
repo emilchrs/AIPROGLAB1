@@ -11,7 +11,7 @@ module minimax =
     | Tie = 4
 
     let addList (list : List<(int * int)>, element : (int * int)) = element :: list 
-
+    //adjacent tiles
     let dirs = [|[|(int (- 1)); 1|]; [|0; 1|]; [|1; 1|]; 
                [|(int (- 1)); 0|];                 [|1; 0|]; 
                [|(int (- 1)); (int (- 1))|]; [|0; (int (- 1))|]; [|1; (int (- 1))|]|]
@@ -20,17 +20,18 @@ module minimax =
     let IsOnBoard(x : int, y : int) = 
       0 <= x && x <= 7 && 0 <= y && y <= 7
 
-      
+    // returnerar mängen av pjäser som matchar den inskickade pjäsen
     let GetScore (board2D: byte[,],tile:byte) =  
       let test = Seq.cast board2D 
       test |> Seq.filter (fun x -> x = tile) |> Seq.length
       
-      
+    // returnerar mängen av pjäser som är i hörn och matchar den inskickade pjäsen  
+    //lägger in alla hörner i en sequence och kollar hur många som matchar input
     let countCorners (board : byte[,], tile : byte) =
         let corner = seq {Array2D.get board 0 0;Array2D.get board 7 0;Array2D.get board 0 7;Array2D.get board 7 7 }
         corner |> Seq.filter (fun x -> x = tile) |> Seq.length
                 
-    //
+    // Returnerar motsattpjäs 
     let OtherTile (tile : byte) = 
                 if tile = byte.Black
                 then byte.White
@@ -51,16 +52,16 @@ module minimax =
                                        then 
                                            let mutable (doneMove : System.Boolean) = false
                                            for (dir : int[]) in dirs do  //kollar alla närliggande pjäser
-                                               if doneMove //om pjäsen är lagd och inom brädet, vänd alla som är närliggande/diagonalt
+                                               if doneMove //om pjäsen är lagd och inom brädet, 
                                                then  
                                                    let mutable (x : int) = X + dir.[0]
                                                    let mutable (y : int) = Y + dir.[1]
-                                                   if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile) 
+                                                   if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile) //kollar så det är motståndar pjäs
                                                    then 
                                                        x <- x + dir.[0]
                                                        y <- y + dir.[1]
                                                        while (IsOnBoard (x, y)) do
-                                                           if board.[x, y] = tile
+                                                           if board.[x, y] = tile //hittar man sin pjäs gör till valid move
                                                            then 
                                                                let z = addList(validMoves, (X, Y)) 
                                                                doneMove <- true
@@ -79,16 +80,16 @@ module minimax =
            let (whiteScore : int) = GetScore (board, byte.White)
            //Kollar så matchen inte är över/ingen kan göra ett move länger
            if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, byte.Black)).Length + (GetValidMoves (board, byte.White)).Length = 0 then 
-               if blackScore > whiteScore then byte.Black  //returnerar vinnaren
+               if blackScore > whiteScore then byte.Black  //returnerar färgen med flest poäng/vinnaren
                else
                    if whiteScore > blackScore then byte.White
                    else byte.Tie
            else
            byte.Empty
 
-
-    let Evaluation (board : byte[,]) = //gör samma men kollar ej om spelet är slut eller om ingen kan röra sig
-              let blackScore = GetScore (board, byte.Black)
+           //ger 1 poäng per pjäs, 3 per möjliga moves, 10 per hörn
+    let Evaluation (board : byte[,]) = 
+              let blackScore = GetScore (board, byte.Black)//hämtar de olika färgernas poäng
               let whiteScore =  GetScore (board, byte.White)
               let bothScore =  blackScore - whiteScore //eval 308
 
@@ -100,21 +101,21 @@ module minimax =
               let cornerScoreWhite = countCorners (board, byte.White)
               let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
 
-              if blackScore = 0 then
+              if blackScore = 0 then//om någon inte har några pjäser kvar
                   2000
               elif whiteScore = 0 then
                   -2000
-              elif blackScore + whiteScore = 64 || moveScoreBlack.Length + moveScoreWhite.Length = 0 then // elif?
+              elif blackScore + whiteScore = 64 || moveScoreBlack.Length + moveScoreWhite.Length = 0 then // kollar så det finns drag att göra
                   if blackScore < whiteScore then
                       (-1000 - whiteScore + blackScore)
                   elif blackScore < whiteScore then
-                          (1000 - whiteScore + blackScore)
+                      (1000 - whiteScore + blackScore)
                   else
-                          0
+                      0
               elif blackScore + whiteScore > 55 then 
                   bothScore
               else 
-              bothScore + 3 * moveScore + 10 * cornerScore
+              (bothScore + 3 * moveScore + 10 * cornerScore) //själva evaluation returnationen
 
 
     //MakeMove
@@ -164,21 +165,21 @@ module minimax =
     //Minimax
 
     let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
-        if (depth = 0 || (GetWinner board  <> byte.Empty)) then
+        if (depth = 0 || (GetWinner board  <> byte.Empty)) then //check if funktion is done or if a win
             Evaluation (board)
         else
-        let bestScore = match isMaxPLayer with
+        let bestScore = match isMaxPLayer with  //set start value for bestSCore
                         | true -> System.Int32.MinValue
                         | false -> System.Int32.MaxValue
 
         let rec LoopMoves (board:byte[,], validMoves:List<int*int>, tile:byte, isMaxPlayer:bool, bestScore:int,  a:int, b:int) =
-            match validMoves with
+            match validMoves with   //match validmove untill empty to loop all valid moves, likt(for each)
             | [] -> bestScore
             | head::tail -> 
-                let boardCopy = Array2D.copy board
+                let boardCopy = Array2D.copy board// gör en kopia av brädet och använder den för nodeScore och göra rörelse
                 let childBoard = MakeMove (boardCopy, head, tile)
                 let nodeScore = MinMaxAlphaBeta (childBoard, (depth-1), a, b, (OtherTile tile), (not isMaxPlayer))
-                if isMaxPlayer then
+                if isMaxPlayer then // beroende på spelare kör minMAx med alpha eller beta, Loopa rekursivt för testa flera lösningar
                     let topScore = Max (bestScore, nodeScore)
                     let alpha = Max (topScore, a)
                     if (b <= alpha) then
@@ -195,9 +196,8 @@ module minimax =
                        LoopMoves (board, tail, tile, isMaxPlayer, topScore, a, beta)
 
                 
-        
+        //hämta anta moves man kan göra och loopa huvudfunktion om de inte finns några
         let validMoves = GetValidMoves (board, tile)
-
         if (validMoves.IsEmpty) then
             MinMaxAlphaBeta (board, depth, a, b, (OtherTile tile), (not isMaxPLayer))
         else

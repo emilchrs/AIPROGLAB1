@@ -1,6 +1,7 @@
-﻿    using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.FSharp.Core;
 
 namespace Reversi
 {
@@ -140,6 +141,8 @@ namespace Reversi
 
         public static int GetScore(byte[,] board, byte tile)
         {
+            
+            
             int score = 0;
             foreach (byte cell in board)
             {
@@ -249,9 +252,11 @@ namespace Reversi
             }
             return validMoves;
         }
-
-        public static void MakeMove(byte[,] board, Tuple<int, int> move, byte tile)
+        
+       
+       public static void MakeMove(byte[,] board, Tuple<int, int> move, byte tile)
         {
+               
             List<Tuple<int, int>> flippedPieces = GetFlippedPieces(board, move, tile);
             foreach (Tuple<int, int> flippedPiece in flippedPieces)
             {
@@ -263,7 +268,7 @@ namespace Reversi
             }
         }
 
-        public static int CountCorners(byte[,] board, byte tile)
+       public static int CountCorners(byte[,] board, byte tile)
         {
             int corners = 0;
             if (board[0, 0] == tile) corners++;
@@ -273,8 +278,8 @@ namespace Reversi
             return corners;
         }
 
-        public static int Evaluation(byte[,] board)
-        {
+       public static int Evaluation(byte[,] board)
+        { 
             // Heuristical evaluation function that quantifies the attractiveness of a board,
             // relative to the black player.
             int evaluation = 0;
@@ -314,7 +319,7 @@ namespace Reversi
             evaluation += (CountCorners(board, Black) - CountCorners(board, White)) * 100;
             return evaluation;
         }
-
+/*
         public static int MinimaxAlphaBeta(byte[,] board, int depth, int a, int b, byte tile, bool isMaxPlayer)
         {
             // The heart of our AI. Minimax algorithm with alpha-beta pruning to speed up computation.
@@ -333,7 +338,7 @@ namespace Reversi
                 {
                     byte[,] childBoard = board.Clone() as byte[,];
                     MakeMove(childBoard, move, tile);
-                    int nodeScore = MinimaxAlphaBeta(childBoard, depth - 1, a, b, OtherTile(tile), !isMaxPlayer);
+                    int nodeScore = FSAI.x.MinMaxAlphaBeta(childBoard, depth - 1, a, b, OtherTile(tile), !isMaxPlayer);
                     if (isMaxPlayer)
                     {
                         bestScore = Math.Max(bestScore, nodeScore);
@@ -356,11 +361,11 @@ namespace Reversi
             }
             return bestScore;
         }
-
+*/
         public static Tuple<int, int> GetAIMove(byte[,] board, int depth, byte tile)
         {
             // The "convienence" function that allows us to use our AI algorithm.
-            List<Tuple<int, int>> validMoves = GetValidMoves(board, tile);
+            List<Tuple<int, int>> validMoves = GetValidMoves(board,tile);
             validMoves = validMoves.OrderBy(a => rng.Next(-10, 10)).ToList();
             if (validMoves.Count > 0)
             {
@@ -389,7 +394,7 @@ namespace Reversi
                     int nodeScore;
                     if (tile == Black)
                     {
-                        nodeScore = MinimaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), false);
+                        nodeScore = FSAI.x.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), false);
                         if (nodeScore > bestScore)
                         {
                             bestScore = nodeScore;
@@ -398,7 +403,7 @@ namespace Reversi
                     }
                     else
                     {
-                        nodeScore = MinimaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), true);
+                        nodeScore = FSAI.x.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), true);
                         if (nodeScore < bestScore)
                         {
                             bestScore = nodeScore;

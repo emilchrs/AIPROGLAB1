@@ -1,4 +1,5 @@
-﻿namespace FSAI
+﻿
+namespace FSAI
 
 module x =
 
@@ -18,17 +19,16 @@ module x =
     let IsOnBoard(x : int, y : int) = 
       0 <= x && x <= 7 && 0 <= y && y <= 7
 
-      //vetfan hur jag testar
+      
     let GetScore (board2D: byte[,],tile:byte) =  
       let test = Seq.cast board2D 
-      let res = test |> Seq.filter (fun x -> x = tile) |>Seq.length
-      res
-      // funkar ej
+      test |> Seq.filter (fun x -> x = tile) |> Seq.length
+      
+      
     let countCorners (board : byte[,], tile : byte) =
         let corner = seq {Array2D.get board 0 0;Array2D.get board 7 0;Array2D.get board 0 7;Array2D.get board 7 7 }
-        let test = corner |> Seq.filter (fun x -> x = tile) |> Seq.length
-        test
-        
+        corner |> Seq.filter (fun x -> x = tile) |> Seq.length
+                
         //OtherTile
     let OtherTile (tile : byte) = 
                 if tile = byte.Black
@@ -51,7 +51,7 @@ module x =
                                            let mutable (doneMove : System.Boolean) = false
                                            for (dir : int[]) in dirs do
                                                if doneMove
-                                               then   //break
+                                               then  
                                                    let mutable (x : int) = X + dir.[0]
                                                    let mutable (y : int) = Y + dir.[1]
                                                    if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile)
@@ -63,10 +63,10 @@ module x =
                                                            then 
                                                                let z = addList(validMoves, (X, Y)) 
                                                                doneMove <- true
-                                                               //break
+                                                               
                                                            else 
                                                                if board.[x, y] = byte.Empty
-                                                               then //break
+                                                               then 
                                                                    x <- x + dir.[0]
                                                                    y <- y + dir.[1]
                              
@@ -160,34 +160,44 @@ module x =
         if x < y then x
         else y       
     //Minimax
-    
-    let rec MiniMaxAlphaBeta(board : byte[,], depth : int, a : int, b : int, tile : byte, isMaxplayer : System.Boolean) =
-            let mutable bestScore = 0 //int
-            let mutable x = 0
-            let mutable y = 0
-            if depth = 0 || GetWinner (board) <> byte.Empty 
-            then (Evaluation (board))
-            else 
-                if isMaxplayer
-                then bestScore <- -5
-                else bestScore <- +5
-                let validMoves = (GetValidMoves (board, tile))
-                if validMoves.Length > 0
-                then
-                    for (move : (int * int)) in validMoves do
-                        let mutable (childBoard : byte [,]) = Array2D.copy board
-                        let z = MakeMove(childBoard, move, tile)
-                        let mutable (nodeScore : int) = MiniMaxAlphaBeta (z, depth-1, a, b, OtherTile(tile), not isMaxplayer)
-                        if isMaxplayer
-                        then
-                            bestScore <- Max (bestScore, nodeScore)
-                            x <- Max (bestScore, a)
-                        else
-                            bestScore <- Min(bestScore, nodeScore)
-                            y <- Min(bestScore, b)
-                        if (y <= x)
-                        then bestScore
-                        
-                else MiniMaxAlphaBeta(board, depth, a, b, OtherTile(tile), not isMaxplayer)
-                bestScore   
+
+    let rec MinMaxAlphaBeta (board, depth, a, b, tile, isMaxPLayer) =
+        if (depth = 0 || (GetWinner board  <> byte.Empty)) then
+            Evaluation (board)
+        else
+        let bestScore = match isMaxPLayer with
+                        | true -> System.Int32.MinValue
+                        | false -> System.Int32.MaxValue
+
+        let rec LoopMoves (board:byte[,], validMoves:List<int*int>, tile:byte, isMaxPlayer:bool, bestScore:int,  a:int, b:int) =
+            match validMoves with
+            | [] -> bestScore
+            | head::tail -> 
+                let boardCopy = Array2D.copy board
+                let childBoard = MakeMove (boardCopy, head, tile)
+                let nodeScore = MinMaxAlphaBeta (childBoard, (depth-1), a, b, (OtherTile tile), (not isMaxPlayer))
+                if isMaxPlayer then
+                    let topScore = Max (bestScore, nodeScore)
+                    let alpha = Max (topScore, a)
+                    if (b <= alpha) then
+                        topScore
+                    else
+                       LoopMoves (board, tail, tile, isMaxPlayer, topScore, alpha, b)
+
+                else
+                    let topScore = Min (bestScore, nodeScore)
+                    let beta = Min (topScore, b)
+                    if (beta <= a) then
+                        topScore
+                    else
+                       LoopMoves (board, tail, tile, isMaxPlayer, topScore, a, beta)
+
+                
+        
+        let validMoves = GetValidMoves (board, tile)
+
+        if (validMoves.IsEmpty) then
+            MinMaxAlphaBeta (board, depth, a, b, (OtherTile tile), (not isMaxPLayer))
+        else
+            LoopMoves (board,validMoves, tile, isMaxPLayer, bestScore, a, b)
 

@@ -1,7 +1,7 @@
 ﻿
 namespace FSAI
 
-module x =
+module minimax =
 
     type byte =
     | Empty = 0
@@ -15,7 +15,8 @@ module x =
     let dirs = [|[|(int (- 1)); 1|]; [|0; 1|]; [|1; 1|]; 
                [|(int (- 1)); 0|];                 [|1; 0|]; 
                [|(int (- 1)); (int (- 1))|]; [|0; (int (- 1))|]; [|1; (int (- 1))|]|]
-
+    
+    //Kollar så att pjäserna inte kommer utanför brädet som är 8x8 stor
     let IsOnBoard(x : int, y : int) = 
       0 <= x && x <= 7 && 0 <= y && y <= 7
 
@@ -29,7 +30,7 @@ module x =
         let corner = seq {Array2D.get board 0 0;Array2D.get board 7 0;Array2D.get board 0 7;Array2D.get board 7 7 }
         corner |> Seq.filter (fun x -> x = tile) |> Seq.length
                 
-        //OtherTile
+    //
     let OtherTile (tile : byte) = 
                 if tile = byte.Black
                 then byte.White
@@ -38,23 +39,23 @@ module x =
                 else
                 raise (new System.ArgumentException("tile must have value 1 or 2.") :> System.Exception)
 
+    //Kollar vilka moves som går att göra
     let GetValidMoves(board: byte[,], tile : byte) = 
-                       let mutable (validMoves : List<int * int>) = List.Empty
+                       let mutable (validMoves : List<int * int>) = List.Empty 
                        do 
                            let mutable (X : int) = 0
-                           while (X < 8) do
-                               do 
+                           while (X < 8) do 
                                    let mutable (Y : int) = 0
                                    while (Y < 8) do
                                        if board.[X, Y] = byte.Empty
                                        then 
                                            let mutable (doneMove : System.Boolean) = false
-                                           for (dir : int[]) in dirs do
-                                               if doneMove
+                                           for (dir : int[]) in dirs do  //kollar alla närliggande pjäser
+                                               if doneMove //om pjäsen är lagd och inom brädet, vänd alla som är närliggande/diagonalt
                                                then  
                                                    let mutable (x : int) = X + dir.[0]
                                                    let mutable (y : int) = Y + dir.[1]
-                                                   if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile)
+                                                   if IsOnBoard (x, y) && board.[x, y] = OtherTile (tile) 
                                                    then 
                                                        x <- x + dir.[0]
                                                        y <- y + dir.[1]
@@ -72,12 +73,13 @@ module x =
                              
                        validMoves           
            
-        
+    //Anropar vinnaren av spelet   
     let GetWinner (board : byte[,]) = 
-           let (blackScore : int) = GetScore (board, byte.Black)
+           let (blackScore : int) = GetScore (board, byte.Black) //Anropar getScore får att se hur många pjäser vardera spelare har
            let (whiteScore : int) = GetScore (board, byte.White)
-           if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, byte.Black)).Length + (GetValidMoves (board, byte.White)).Length = 0 then
-               if blackScore > whiteScore then byte.Black
+           //Kollar så matchen inte är över/ingen kan göra ett move länger
+           if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, byte.Black)).Length + (GetValidMoves (board, byte.White)).Length = 0 then 
+               if blackScore > whiteScore then byte.Black  //returnerar vinnaren
                else
                    if whiteScore > blackScore then byte.White
                    else byte.Tie
@@ -119,7 +121,7 @@ module x =
 
    
 
-
+    //hämtar alla pjäser som ligger mellan sig själv och alla riktningar
     let GetFlippedPieces(board : byte[,], move : int * int, tile : byte) =
         let (moveX : int) = fst move
         let (moveY : int) = snd move
@@ -129,7 +131,7 @@ module x =
                 let dirFlippedPieces : List<int * int> = List.Empty
                 let mutable (x : int) = moveX + dir.[0]
                 let mutable (y : int) = moveY + dir.[1]
-                if IsOnBoard (x,y) && board.[x,y] = OtherTile(tile) then
+                if IsOnBoard (x,y) && board.[x,y] = OtherTile(tile) then //Kontrollerar så att det är inom brädet samt kollar om det är motståndarpjäs
                     let z = addList(flippedPieces, (x,y))
                     x <- x + dir.[0]
                     y <- y + dir.[1]
@@ -161,7 +163,7 @@ module x =
         else y       
     //Minimax
 
-    let rec MinMaxAlphaBeta (board, depth, a, b, tile, isMaxPLayer) =
+    let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
         if (depth = 0 || (GetWinner board  <> byte.Empty)) then
             Evaluation (board)
         else

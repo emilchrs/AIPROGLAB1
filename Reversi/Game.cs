@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.FSharp.Core;
+
 
 namespace Reversi
 {
@@ -394,7 +394,7 @@ namespace Reversi
                     int nodeScore;
                     if (tile == Black)
                     {
-                        nodeScore = FSAI.x.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), false);
+                        nodeScore = FSAI.minimax.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), false);
                         if (nodeScore > bestScore)
                         {
                             bestScore = nodeScore;

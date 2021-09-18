@@ -54,9 +54,7 @@ module minimax =
     let GetValidMoves(board: byte[,], tile : byte) = 
                        let mutable (validMoves : List<int * int>) = List.Empty 
                        do 
-                           let mutable (X : int) = 0
                            for X in 0..7  do 
-                                   let mutable (Y : int) = 0
                                    for Y in 0..7 do
                                        if board.[X, Y] = Empty
                                        then 
@@ -73,7 +71,7 @@ module minimax =
                                                        while (IsOnBoard (x, y)) do
                                                            if board.[x, y] = tile //hittar man sin pjäs gör till valid move
                                                            then 
-                                                               let z = addList(validMoves, (X, Y)) 
+                                                               validMoves <- addList(validMoves, (X, Y)) //add posible moves 
                                                                doneMove <- true
                                                                
                                                            else 
@@ -114,14 +112,14 @@ module minimax =
               let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
 
               if blackScore = 0 then//om någon inte har några pjäser kvar
-                  2000
+                  20000
               elif whiteScore = 0 then
-                  -2000
+                  -20000
               elif blackScore + whiteScore = 64 || moveScoreBlack.Length + moveScoreWhite.Length = 0 then // kollar så det finns drag att göra
                   if blackScore < whiteScore then
-                      (-1000 - whiteScore + blackScore)
+                      (-10000 - whiteScore + blackScore)
                   elif blackScore < whiteScore then
-                      (1000 - whiteScore + blackScore)
+                      (10000 - whiteScore + blackScore)
                   else
                       0
               elif blackScore + whiteScore > 55 then 
@@ -140,7 +138,7 @@ module minimax =
         let (moveY : int) = snd move
         let flippedPieces : List<int * int> = List.Empty  
         if board.[moveX, moveY] = Empty then
-            for(dir : int[]) in dirs do
+            for(dir : int[]) in dirs do //   loopa alla närliggande pjäser
                 let dirFlippedPieces : List<int * int> = List.Empty
                 let mutable (x : int) = moveX + dir.[0]
                 let mutable (y : int) = moveY + dir.[1]
@@ -148,7 +146,7 @@ module minimax =
                     let z = addList(flippedPieces, (x,y))
                     x <- x + dir.[0]
                     y <- y + dir.[1]
-                    while (IsOnBoard (x,y)) do
+                    while (IsOnBoard (x,y)) do // 
                         if board.[x, y] = tile
                         then 
                             if board.[x,y] = Empty
@@ -156,10 +154,7 @@ module minimax =
                                 x <- x + dir.[0]
                                 y <- y + dir.[1]
         flippedPieces
-    let GetFlippedPiecesfunc(op,board : byte[,], move : int * int, tile : byte) =
-        let res:List<System.Tuple<int,int>> = op board move tile 
-        res
-
+ 
 
     let MakeMove(board : byte[,], (move : (int * int)), tile : byte) = 
          let flippedPieces = GetFlippedPieces(board,move,tile)

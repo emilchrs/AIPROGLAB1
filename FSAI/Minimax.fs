@@ -1,14 +1,24 @@
 ﻿
 namespace FSAI
 
+
+
 module minimax =
 
-    type byte =
-    | Empty = 0
-    | White = 1
-    | Black = 2
-    | Valid = 3
-    | Tie = 4
+
+    [<Literal>] 
+    let Empty = 0uy
+    [<Literal>] 
+    let White = 1uy
+    [<Literal>] 
+    let Black = 2uy
+    [<Literal>] 
+    let Valid = 3uy
+    [<Literal>] 
+    let Tie = 4uy
+
+
+
 
     let addList (list : List<(int * int)>, element : (int * int)) = element :: list 
     //adjacent tiles
@@ -33,10 +43,10 @@ module minimax =
                 
     // Returnerar motsattpjäs 
     let OtherTile (tile : byte) = 
-                if tile = byte.Black
-                then byte.White
-                elif tile = byte.White
-                then byte.Black
+                if tile = Black
+                then White
+                elif tile = White
+                then Black
                 else
                 raise (new System.ArgumentException("tile must have value 1 or 2.") :> System.Exception)
 
@@ -48,7 +58,7 @@ module minimax =
                            while (X < 8) do 
                                    let mutable (Y : int) = 0
                                    while (Y < 8) do
-                                       if board.[X, Y] = byte.Empty
+                                       if board.[X, Y] = Empty
                                        then 
                                            let mutable (doneMove : System.Boolean) = false
                                            for (dir : int[]) in dirs do  //kollar alla närliggande pjäser
@@ -67,7 +77,7 @@ module minimax =
                                                                doneMove <- true
                                                                
                                                            else 
-                                                               if board.[x, y] = byte.Empty
+                                                               if board.[x, y] = Empty
                                                                then 
                                                                    x <- x + dir.[0]
                                                                    y <- y + dir.[1]
@@ -76,29 +86,29 @@ module minimax =
            
     //Anropar vinnaren av spelet   
     let GetWinner (board : byte[,]) = 
-           let (blackScore : int) = GetScore (board, byte.Black) //Anropar getScore får att se hur många pjäser vardera spelare har
-           let (whiteScore : int) = GetScore (board, byte.White)
+           let (blackScore : int) = GetScore (board, Black) //Anropar getScore får att se hur många pjäser vardera spelare har
+           let (whiteScore : int) = GetScore (board, White)
            //Kollar så matchen inte är över/ingen kan göra ett move länger
-           if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, byte.Black)).Length + (GetValidMoves (board, byte.White)).Length = 0 then 
-               if blackScore > whiteScore then byte.Black  //returnerar färgen med flest poäng/vinnaren
+           if blackScore = 0 || whiteScore = 0 || blackScore + whiteScore = 64 || (GetValidMoves (board, Black)).Length + (GetValidMoves (board, White)).Length = 0 then 
+               if blackScore > whiteScore then Black  //returnerar färgen med flest poäng/vinnaren
                else
-                   if whiteScore > blackScore then byte.White
-                   else byte.Tie
+                   if whiteScore > blackScore then White
+                   else Tie
            else
-           byte.Empty
+           Empty
 
            //ger 1 poäng per pjäs, 3 per möjliga moves, 10 per hörn
     let Evaluation (board : byte[,]) = 
-              let blackScore = GetScore (board, byte.Black)//hämtar de olika färgernas poäng
-              let whiteScore =  GetScore (board, byte.White)
+              let blackScore = GetScore (board, Black)//hämtar de olika färgernas poäng
+              let whiteScore =  GetScore (board, White)
               let bothScore =  blackScore - whiteScore //eval 308
 
-              let moveScoreBlack = GetValidMoves (board, byte.Black) 
-              let moveScoreWhite = GetValidMoves (board, byte.White)
+              let moveScoreBlack = GetValidMoves (board, Black) 
+              let moveScoreWhite = GetValidMoves (board, White)
               let moveScore = moveScoreBlack.Length - moveScoreWhite.Length //eval 313
 
-              let cornerScoreBlack = countCorners (board, byte.Black)
-              let cornerScoreWhite = countCorners (board, byte.White)
+              let cornerScoreBlack = countCorners (board, Black)
+              let cornerScoreWhite = countCorners (board, White)
               let cornerScore = cornerScoreBlack - cornerScoreWhite // eval 314
 
               if blackScore = 0 then//om någon inte har några pjäser kvar
@@ -127,7 +137,7 @@ module minimax =
         let (moveX : int) = fst move
         let (moveY : int) = snd move
         let flippedPieces : List<int * int> = List.Empty  
-        if board.[moveX, moveY] = byte.Empty then
+        if board.[moveX, moveY] = Empty then
             for(dir : int[]) in dirs do
                 let dirFlippedPieces : List<int * int> = List.Empty
                 let mutable (x : int) = moveX + dir.[0]
@@ -139,7 +149,7 @@ module minimax =
                     while (IsOnBoard (x,y)) do
                         if board.[x, y] = tile
                         then 
-                            if board.[x,y] = byte.Empty
+                            if board.[x,y] = Empty
                             then 
                                 x <- x + dir.[0]
                                 y <- y + dir.[1]
@@ -165,7 +175,7 @@ module minimax =
     //Minimax
 
     let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
-        if (depth = 0 || (GetWinner board  <> byte.Empty)) then //check if funktion is done or if a win
+        if (depth = 0 || (GetWinner board  <> Empty)) then //check if funktion is done or if a win
             Evaluation (board)
         else
         let bestScore = match isMaxPLayer with  //set start value for bestSCore

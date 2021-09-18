@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Microsoft.FSharp.Collections;
+using Microsoft.FSharp.Core;
 
 namespace Reversi
 {
@@ -394,7 +395,7 @@ namespace Reversi
                     int nodeScore;
                     if (tile == Black)
                     {
-                        nodeScore = FSAI.minimax.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), false);
+                        nodeScore = minMax(childBoard, OtherTile(tile),depth - 1, int.MinValue, int.MaxValue,  false);
                         if (nodeScore > bestScore)
                         {
                             bestScore = nodeScore;
@@ -403,7 +404,7 @@ namespace Reversi
                     }
                     else
                     {
-                        nodeScore = FSAI.minimax.MinMaxAlphaBeta(childBoard, depth - 1, int.MinValue, int.MaxValue, OtherTile(tile), true);
+                        nodeScore = minMax(childBoard, OtherTile(tile),depth - 1, int.MinValue, int.MaxValue,  true);
                         if (nodeScore < bestScore)
                         {
                             bestScore = nodeScore;
@@ -441,6 +442,19 @@ namespace Reversi
             }
             return null;
         }
+
+        public static int minMax(byte[,] board, byte tile, int depth, int alpha, int beta,bool isMaxPLayer)
+        {
+            var wrapValidMoves = FuncConvert.ToFSharpFunc<Tuple<byte[,], byte>,
+                Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>>(t => ListModule.OfSeq(GetValidMoves(t.Item1, t.Item2)));
+            var wrappedFlipped = FuncConvert.ToFSharpFunc<Tuple<byte[,], Tuple<int, int>, byte>,
+                 Microsoft.FSharp.Collections.FSharpList<Tuple<int, int>>>(t => ListModule.OfSeq(GetFlippedPieces(t.Item1, t.Item2, t.Item3)));
+            var GetValidFunc = FuncConvert.FuncFromTupled(wrapValidMoves);
+            var GetflippedFunc = FuncConvert.FuncFromTupled(wrappedFlipped);
+            return FSAI.minimax.MinMaxAlphaBeta(GetflippedFunc, GetValidFunc, board, depth, alpha, beta, tile, isMaxPLayer);
+
+        }
+
 
     }
 }

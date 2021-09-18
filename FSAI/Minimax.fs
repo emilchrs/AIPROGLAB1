@@ -161,8 +161,8 @@ module minimax =
         res
 
 
-    let MakeMove(op,board : byte[,], (move : (int * int)), tile : byte) = 
-         let flippedPieces = GetFlippedPiecesfunc(op,board,move,tile)
+    let MakeMove(board : byte[,], (move : (int * int)), tile : byte) = 
+         let flippedPieces = GetFlippedPieces(board,move,tile)
          let board2 = Array2D.copy board
          for flippedPiece in flippedPieces do 
              board2.[fst flippedPiece, snd flippedPiece] <- tile
@@ -179,7 +179,7 @@ module minimax =
         else y       
     //Minimax
 
-    let rec MinMaxAlphaBeta (flipped,valid,board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
+    let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
         if (depth = 0 || (GetWinner board  <> Empty)) then //check if funktion is done or if a win
             Evaluation (board)
         else
@@ -192,8 +192,8 @@ module minimax =
             | [] -> bestScore
             | head::tail -> 
                 let boardCopy = Array2D.copy board// gör en kopia av brädet och använder den för nodeScore och göra rörelse
-                let childBoard = MakeMove(flipped,boardCopy, head, tile)
-                let nodeScore = MinMaxAlphaBeta (flipped,valid,childBoard, (depth-1), a, b, (OtherTile tile), (not isMaxPlayer))
+                let childBoard = MakeMove(boardCopy, head, tile)
+                let nodeScore = MinMaxAlphaBeta (childBoard, (depth-1), a, b, (OtherTile tile), (not isMaxPlayer))
                 if isMaxPlayer then // beroende på spelare kör minMAx med alpha eller beta, Loopa rekursivt för testa flera lösningar
                     let topScore = Max (bestScore, nodeScore)
                     let alpha = Max (topScore, a)
@@ -214,7 +214,7 @@ module minimax =
         //hämta anta moves man kan göra och loopa huvudfunktion om de inte finns några
         let validMoves = GetValidMoves (board, tile)
         if (validMoves.IsEmpty) then
-            MinMaxAlphaBeta (flipped,valid,board, depth, a, b, (OtherTile tile), (not isMaxPLayer))
+            MinMaxAlphaBeta (board, depth, a, b, (OtherTile tile), (not isMaxPLayer))
         else
             LoopMoves (board,validMoves, tile, isMaxPLayer, bestScore, a, b)
 

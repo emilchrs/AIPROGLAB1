@@ -161,16 +161,16 @@ module minimax =
             board2.[(fst move), (snd move)] <- tile
          board2
 
-    
+    //Max funktion för två integers används i minimax
     let Max (x : int, y : int) =
                if x > y then x
                else y
+    //Min funktion
     let Min (x : int, y : int) =
         if x < y then x
         else y    
         
     //Minimax
-
     let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
         if (depth = 0 || (GetWinner board  <> Empty)) then //check if funktion is done or if a win
             Evaluation (board)
@@ -203,7 +203,7 @@ module minimax =
                        LoopMoves (board, tail, tile, isMaxPlayer, topScore, a, beta)
 
                 
-        //hämta anta moves man kan göra och loopa huvudfunktion om de inte finns några
+        //hämta antal moves man kan göra och loopa huvudfunktion om de inte finns några
         let validMoves = GetValidMoves (board, tile)
         if (validMoves.IsEmpty) then
             MinMaxAlphaBeta (board, depth, a, b, (OtherTile tile), (not isMaxPLayer))

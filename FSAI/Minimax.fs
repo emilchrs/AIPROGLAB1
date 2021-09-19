@@ -126,10 +126,6 @@ module minimax =
                   bothScore
               else 
               (bothScore + 3 * moveScore + 10 * cornerScore) //själva evaluation returnationen
-
-
-    //MakeMove
-
    
 
     //hämtar alla pjäser som ligger mellan sig själv och alla riktningar
@@ -155,12 +151,12 @@ module minimax =
                                 y <- y + dir.[1]
         flippedPieces
  
-
+ //Ändrar position av egna pjäserna till rätt färg
     let MakeMove(board : byte[,], (move : (int * int)), tile : byte) = 
-         let flippedPieces = GetFlippedPieces(board,move,tile)
-         let board2 = Array2D.copy board
+         let flippedPieces = GetFlippedPieces(board,move,tile) //hämtar funk getFlippedPieces för att kunna ändra rätt tiles till rätt färger
+         let board2 = Array2D.copy board 
          for flippedPiece in flippedPieces do 
-             board2.[fst flippedPiece, snd flippedPiece] <- tile
+             board2.[fst flippedPiece, snd flippedPiece] <- tile 
          if not flippedPieces.IsEmpty then 
             board2.[(fst move), (snd move)] <- tile
          board2
@@ -171,7 +167,8 @@ module minimax =
                else y
     let Min (x : int, y : int) =
         if x < y then x
-        else y       
+        else y    
+        
     //Minimax
 
     let rec MinMaxAlphaBeta (board : byte[,], depth: int, a: int, b: int, tile : byte, isMaxPLayer: bool) =
